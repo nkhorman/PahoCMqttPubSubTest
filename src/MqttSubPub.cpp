@@ -24,7 +24,7 @@ MqttSubPub & MqttSubPub::S1()
 {
 	if(lastResult_ == MQTTCLIENT_SUCCESS)
 	{
-		stage("Startup()::create");
+		stage("Startup(s1)::create");
 		lastResult_ = MQTTClient_create(
 			&client
 			, hostUrl_.c_str()
@@ -40,7 +40,7 @@ MqttSubPub & MqttSubPub::S2()
 {
 	if(lastResult_ == MQTTCLIENT_SUCCESS)
 	{
-		stage("Startup()::setCallbacks");
+		stage("Startup(s2)::setCallbacks");
 		lastResult_ = MQTTClient_setCallbacks(client, this
 			, MsgConnectionLost, MsgArrived, MsgDelivered
 		);
@@ -58,7 +58,7 @@ MqttSubPub & MqttSubPub::S3()
 {
 	if(lastResult_ == MQTTCLIENT_SUCCESS)
 	{
-		stage("Startup()::connect");
+		stage("Startup(s3)::connect");
 		conn_opts = MQTTClient_connectOptions_initializer;
 		conn_opts.keepAliveInterval = 20;
 		conn_opts.cleansession = 1;

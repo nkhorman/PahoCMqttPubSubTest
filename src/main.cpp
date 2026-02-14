@@ -44,6 +44,7 @@ void mqtt(
 			.SslClientKey(strClientKeyPem);
 	}
 
+	std::cout << "Subscribe - '" << host << "' : '" << topic << "'" << std::endl;
 	if(mq
 		.Host(host)
 		.Topic(topic)
