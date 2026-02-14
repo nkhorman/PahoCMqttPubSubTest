@@ -1,0 +1,31 @@
+cmake_minimum_required(VERSION 3.16)
+
+set(LIBRESSL_RELEASE "4.2.1")
+
+set(LIBRESSL_C_FLAGS "${CMAKE_C_FLAGS_INIT}")
+# set(LIBRESSL_CXX_FLAGS "${CMAKE_CXX_FLAGS_INIT}")
+
+if(DEFINED ${DBUILD_TARGET_NEST})
+	set(LIBRESSL_PATCH "patch -p1 < ${CMAKE_SOURCE_DIR}/vendor/libressl/cmakelists.txt.patch")
+endif()
+
+ExternalProject_Add(libressl
+	PREFIX ${CMAKE_BINARY_DIR}/libressl
+	URL "https://github.com/libressl/portable/releases/download/v${LIBRESSL_RELEASE}/libressl-${LIBRESSL_RELEASE}.tar.gz"
+	PATCH_COMMAND ${LIBRESSL_PATCH}
+	CMAKE_ARGS
+		-DLIBRESSL_APPS=FALSE
+		-DLIBRESSL_TESTS=OFF
+		-DENABLE_ASM=OFF
+		# -DENABLE_MAN=OFF # halucination
+
+		-DCMAKE_C_STANDARD=99
+		-DCMAKE_CXX_STANDARD=11
+		-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
+		-DCMAKE_SYSROOT=${CMAKE_SYSROOT}
+		# -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/modules/libressl
+		-DCMAKE_INSTALL_PREFIX=<BINARY_DIR>
+
+        -DCMAKE_C_FLAGS=${LIBRESSL_C_FLAGS}
+        # -DCMAKE_CXX_FLAGS=${LIBRESSL_CXX_FLAGS}
+	)
