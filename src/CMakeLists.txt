@@ -28,3 +28,4 @@ target_include_directories(pubsub PRIVATE ${MQTT_I} ${LIBRESSL_INCLUDE})
 target_link_directories(pubsub PRIVATE ${MQTT_L} ${LIBRESSL_LIB})
 
 target_link_libraries(pubsub PRIVATE ${MQTT_LIB} pthread)
+target_compile_definitions(pubsub PRIVATE MQTT_STAGE)

@@ -1,3 +1,5 @@
 *.o
 build_host
 build_arm
+linaro_toolchain
+pem
