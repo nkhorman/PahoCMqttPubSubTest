@@ -10,6 +10,11 @@ if(BUILD_MQTT_W_SSL)
 			-DLIBRESSL_ROOT_DIR=${CMAKE_BINARY_DIR}/libressl/src/libressl-build
 		)
 	endif()
+
+	if(NOT EXISTS "${CMAKE_BINARY_DIR}/patch_applied")
+		set(SNI_PATCH patch -N -p1 -i ${CMAKE_CURRENT_LIST_DIR}/sni.patch)
+		set(SNI_PATCH_WRAPPER ${SNI_PATCH} && touch ${CMAKE_BINARY_DIR}/patch_applied)
+	endif()
 endif()
 
 ExternalProject_Add(mqtt
@@ -18,6 +23,7 @@ ExternalProject_Add(mqtt
 	GIT_SHALLOW ON
 	GIT_PROGRESS ON
 	PREFIX ${CMAKE_BINARY_DIR}/mqtt
+	PATCH_COMMAND ${SNI_PATCH_WRAPPER}
 	CMAKE_ARGS
 		-DCMAKE_C_STANDARD=99
 		-DCMAKE_CXX_STANDARD=11
