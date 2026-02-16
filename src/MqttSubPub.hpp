@@ -32,7 +32,13 @@ public:
 	{
 #ifdef MQTT_STAGE
 		stage_ = stage;
-		std::cout << "stage: " << stage << std::endl;
+		std::cout << "stage: " << stage_ << std::endl;
+#endif
+	}
+	inline void stageLastError()
+	{
+#ifdef MQTT_STAGE
+		std::cout << "stage: " << LastResult() << std::endl;
 #endif
 	}
 	std::string stage() const { return stage_; }
@@ -44,6 +50,7 @@ public:
 	MqttSubPub &UserPass(std::string const &str) { userPass_ = str; return *this; }
 	MqttSubPub & SslServerChain(std::string const &str) { isSsl_ |= !str.empty(); sslServerChainPem = str; return * this;}
 	MqttSubPub & SslClientKey(std::string const &str) { isSsl_ |= !str.empty(); strClientKeyPem = str; return *this; }
+	void SslLogLevel(int l) { logLevel_ = l; }
 
 protected:
 	void Shutdown();
@@ -70,6 +77,7 @@ protected:
 	bool isSsl_ = false;
 	std::string sslServerChainPem;
 	std::string strClientKeyPem;
+	int logLevel_ = 5;
 
 	std::function<void(std::string const &, std::string const &)> fnSubCallback_;
 

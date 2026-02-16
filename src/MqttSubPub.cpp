@@ -20,8 +20,19 @@ MqttSubPub &MqttSubPub::Host(std::string const &url)
 	return *this;
 }
 
+void trace_callback(enum MQTTCLIENT_TRACE_LEVELS level, char* message)
+{
+	fprintf(stderr, "Trace : %d, %s\n", level, message);
+}
+
 MqttSubPub & MqttSubPub::S1()
 {
+	if(logLevel_)
+	{
+		MQTTClient_setTraceCallback(trace_callback);
+		MQTTClient_setTraceLevel((enum MQTTCLIENT_TRACE_LEVELS)logLevel_);
+	}
+
 	if(lastResult_ == MQTTCLIENT_SUCCESS)
 	{
 		stage("Startup(s1)::create");
@@ -32,6 +43,7 @@ MqttSubPub & MqttSubPub::S1()
 			, MQTTCLIENT_PERSISTENCE_NONE
 			, NULL
 			);
+		stageLastError();
 	}
 	return *this;
 }
@@ -44,6 +56,7 @@ MqttSubPub & MqttSubPub::S2()
 		lastResult_ = MQTTClient_setCallbacks(client, this
 			, MsgConnectionLost, MsgArrived, MsgDelivered
 		);
+		stageLastError();
 	}
 	return *this;
 }
@@ -69,13 +82,15 @@ MqttSubPub & MqttSubPub::S3()
 		{
 			conn_opts.ssl = & ssl_opts;
 			ssl_opts = MQTTClient_SSLOptions_initializer;
-			ssl_opts.trustStore = sslServerChainPem.c_str(); //"/home/neal/src/nest/src/mqtt/neal/pubsub/chain.pem";
-			ssl_opts.privateKey = strClientKeyPem.c_str(); //"/home/neal/src/nest/src/mqtt/neal/pubsub/client.pem";
-			ssl_opts.enableServerCertAuth = 1;
+			// ssl_opts.trustStore = sslServerChainPem.c_str(); //"/home/neal/src/nest/src/mqtt/neal/pubsub/chain.pem";
+			// ssl_opts.privateKey = strClientKeyPem.c_str(); //"/home/neal/src/nest/src/mqtt/neal/pubsub/client.pem";
+			ssl_opts.enableServerCertAuth = 0;
 			ssl_opts.ssl_error_cb = SSL_err_handler;
+			ssl_opts.sslVersion = 3;
 		}
 
 		lastResult_ = MQTTClient_connect(client, &conn_opts);
+		stageLastError();
 	}
 
 	initialized_= (lastResult_ == MQTTCLIENT_SUCCESS);
@@ -98,6 +113,7 @@ void MqttSubPub::Shutdown()
 		initialized_ = false;
 		stage("Shutdown()::disconnect");
 		lastResult_ = MQTTClient_disconnect(client, timeout_);
+		stageLastError();
 		MQTTClient_destroy(&client);
 	}
 }
@@ -175,6 +191,7 @@ bool MqttSubPub::Subscribe(std::function<void(std::string const &topic, std::str
 	{
 		stage("Subscribe()::subscribe");
 		lastResult_ = MQTTClient_subscribe(client, topic_.c_str(), qos);
+		stageLastError();
 		subscribed_ = (lastResult_ == MQTTCLIENT_SUCCESS);
 		if(subscribed_)
 			fnSubCallback_ = fn;
@@ -189,6 +206,7 @@ bool MqttSubPub::Unsubscribe()
 	{
 		stage("Unsubscribe()::unsubscribe");
 		lastResult_ = MQTTClient_unsubscribe(client, topic_.c_str());
+		stageLastError();
 		subscribed_ = !(lastResult_ == MQTTCLIENT_SUCCESS);
 	}
 
@@ -207,11 +225,13 @@ bool MqttSubPub::Publish(std::string const &value, int qos, int retain)
 		stage_ = "Publish()::publish";
 
 		lastResult_ = MQTTClient_publishMessage(client, topic_.c_str(), &pubmsg, &token);
+		stageLastError();
 		if (lastResult_ == MQTTCLIENT_SUCCESS)
 		{
 			std::cout << "Message publish token " << token << std::endl;
 			stage_ = "Publish()::waitForCompletion";
 			lastResult_ = MQTTClient_waitForCompletion(client, token, timeout_);
+			stageLastError();
 		}
 	}
 

@@ -24,11 +24,13 @@ void mqtt(
 	, std::string const &userPass
 	, std::string const &strServerCertPem
 	, std::string const &strClientKeyPem
+	, int sslLogLevel
 	)
 {
 	MqttSubPub mq;
 	std::cout << "mq clientid: " << mq.ClientId() << std::endl;
-	std::cout << "Subscribe - '" << host << "' : '" << topic << "'" << std::endl;
+
+	mq.SslLogLevel(sslLogLevel);
 
 	if(!userName.empty())
 	{
@@ -79,6 +81,7 @@ int main(int argc, char **argv)
 	char const *strClientKeyPem = "";
 	char const *userName = "";
 	char const *userPass = "";
+	int sslLogLevel = 0;
 
 	struct option options[] =
 	{
@@ -92,6 +95,7 @@ int main(int argc, char **argv)
 			{ "userpass", required_argument, NULL, 'p' },
 			{ "serverchain", required_argument, NULL, 's' },
 			{ "clientkey", required_argument, NULL, 'k' },
+			{ "loglevel", required_argument, NULL, 'l' },
 			{ NULL, 0, 0, 0 }
 	};
 
@@ -99,7 +103,7 @@ int main(int argc, char **argv)
 	int n = 0;
 	while (n >= 0)  
 	{
-			n = getopt_long(argc, argv, "u:t:v:q:n:p:s:k:", options, NULL);
+			n = getopt_long(argc, argv, "u:t:v:q:n:p:s:k:l:", options, NULL);
 			if (n < 0)
 					continue;
 			switch (n)
@@ -112,6 +116,7 @@ int main(int argc, char **argv)
 				case 'p': userPass = optarg; break;
 				case 's': strServerChainPem = optarg; break;
 				case 'k': strClientKeyPem = optarg; break;
+				case 'l': sslLogLevel = atoi(optarg); break;
 			}
 	}
 	argc -= optind;
@@ -127,6 +132,7 @@ int main(int argc, char **argv)
 		, userPass
 		, strServerChainPem
 		, strClientKeyPem
+		, sslLogLevel
 		);
 
 	return 0;
