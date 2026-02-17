@@ -17,7 +17,7 @@ public:
 		};
 	virtual ~MqttSubPub() { Shutdown(); }
 
-	MqttSubPub &Host(std::string const &url);
+	MqttSubPub &Connect(std::string const &url);
 
 	inline MqttSubPub &Topic(std::string const &topic) { topic_ = topic; return *this;}
 	std::string LastResult();
@@ -51,6 +51,10 @@ public:
 	MqttSubPub & SslServerChain(std::string const &str) { isSsl_ |= !str.empty(); sslServerChainPem = str; return * this;}
 	MqttSubPub & SslClientKey(std::string const &str) { isSsl_ |= !str.empty(); strClientKeyPem = str; return *this; }
 	void SslLogLevel(int l) { logLevel_ = l; }
+
+
+	MqttSubPub &  OnConnect(std::function<void()> fn) { fnOnConnect_ = fn; return *this; }
+	MqttSubPub &  OnDisconnect(std::function<void()> fn) { fnOnDisconnect_ = fn; return *this; }
 
 protected:
 	void Shutdown();
@@ -89,4 +93,7 @@ protected:
 	MQTTClient_SSLOptions ssl_opts = MQTTClient_SSLOptions_initializer;;
 	MQTTClient_message pubmsg = MQTTClient_message_initializer;
 	MQTTClient_deliveryToken token;
+
+	std::function<void()> fnOnConnect_;
+	std::function<void()> fnOnDisconnect_;
 };

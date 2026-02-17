@@ -46,15 +46,15 @@ void mqtt(
 			.SslClientKey(strClientKeyPem);
 	}
 
-	std::cout << "Subscribe - '" << host << "' : '" << topic << "'" << std::endl;
-	if(mq
-		.Host(host)
-		.Topic(topic)
-		.Subscribe(callback, qos)
-	)
-		std::cout << "Subscribe - success - " << mq.LastResult() << std::endl;
-	else
-		std::cout << "Subscribe - fail - " << mq.LastResult() << std::endl;
+	std::cout << "Connect - '" << host << "'" << std::endl;
+	mq.OnConnect([&]()
+	{
+		std::cout << "Subscribe - '" << topic << "'" << std::endl;
+		if(mq.Topic(topic).Subscribe(callback, qos))
+			std::cout << "Subscribe - success - " << mq.LastResult() << std::endl;
+		else
+			std::cout << "Subscribe - fail - " << mq.LastResult() << std::endl;
+	}).Connect(host);
 
 	int tick = 0;
 	while(!mq.needShutdown() && !mq.isError())

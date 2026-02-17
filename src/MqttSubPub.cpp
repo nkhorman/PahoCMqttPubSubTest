@@ -5,7 +5,7 @@
 
 #include "MqttSubPub.hpp"
 
-MqttSubPub &MqttSubPub::Host(std::string const &url)
+MqttSubPub &MqttSubPub::Connect(std::string const &url)
 {
 	if(hostUrl_ != url)
 	{
@@ -22,7 +22,7 @@ MqttSubPub &MqttSubPub::Host(std::string const &url)
 
 void trace_callback(enum MQTTCLIENT_TRACE_LEVELS level, char* message)
 {
-	fprintf(stderr, "Trace : %d, %s\n", level, message);
+	std::cerr << "Trace: " << level << ", " << message << std::endl;
 }
 
 MqttSubPub & MqttSubPub::S1()
@@ -63,7 +63,7 @@ MqttSubPub & MqttSubPub::S2()
 
 int SSL_err_handler(const char *str, size_t len, void *u)
 {
-	printf("SSL ERROR : '%s'\n", str);
+	std::cerr << "SSL Error: " << str << std::endl;
 	return 0;
 }
 
@@ -82,8 +82,8 @@ MqttSubPub & MqttSubPub::S3()
 		{
 			conn_opts.ssl = & ssl_opts;
 			ssl_opts = MQTTClient_SSLOptions_initializer;
-			// ssl_opts.trustStore = sslServerChainPem.c_str(); //"/home/neal/src/nest/src/mqtt/neal/pubsub/chain.pem";
-			// ssl_opts.privateKey = strClientKeyPem.c_str(); //"/home/neal/src/nest/src/mqtt/neal/pubsub/client.pem";
+			ssl_opts.trustStore = sslServerChainPem.c_str();
+			ssl_opts.privateKey = strClientKeyPem.c_str();
 			ssl_opts.enableServerCertAuth = 0;
 			ssl_opts.ssl_error_cb = SSL_err_handler;
 			ssl_opts.sslVersion = 3;
@@ -91,9 +91,12 @@ MqttSubPub & MqttSubPub::S3()
 
 		lastResult_ = MQTTClient_connect(client, &conn_opts);
 		stageLastError();
+
+		initialized_= (lastResult_ == MQTTCLIENT_SUCCESS);
+		if(lastResult_ == MQTTCLIENT_SUCCESS && fnOnConnect_)
+			fnOnConnect_();
 	}
 
-	initialized_= (lastResult_ == MQTTCLIENT_SUCCESS);
 	return *this;
 }
 
@@ -180,6 +183,8 @@ void MqttSubPub::MsgConnectionLost(void *ctx, char *cause)
 		std::cout << "     cause: " << cause << std::endl;
 	if(ptr)
 		ptr->connLost_ = true;
+	if(ptr->fnOnDisconnect_)
+		ptr->fnOnDisconnect_();
 }
 
 bool MqttSubPub::Subscribe(std::function<void(std::string const &topic, std::string const &msg)> fn, int qos)
