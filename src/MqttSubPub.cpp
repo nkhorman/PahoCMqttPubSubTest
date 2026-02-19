@@ -3,7 +3,16 @@
 #include <sstream>
 #include <iostream>
 
+#include <string.h>
+
 #include "MqttSubPub.hpp"
+
+#ifdef BUILD_MQTT_W_SSL
+#define URI_SSL   "ssl://"
+#define URI_TLS   "tls://"
+#define URI_MQTTS "mqtts://"
+#define URI_WSS  "wss://"
+#endif
 
 MqttSubPub &MqttSubPub::Connect(std::string const &url)
 {
@@ -78,16 +87,28 @@ MqttSubPub & MqttSubPub::S3()
 		conn_opts.username = userName_.c_str();
 		conn_opts.password = userPass_.c_str();
 
+#ifdef BUILD_MQTT_W_SSL
+		isSsl_ = (
+			strncmp(URI_SSL, hostUrl_.c_str(), strlen(URI_SSL)) != 0
+			|| strncmp(URI_TLS, hostUrl_.c_str(), strlen(URI_TLS)) != 0
+			|| strncmp(URI_MQTTS, hostUrl_.c_str(), strlen(URI_MQTTS)) != 0
+			|| strncmp(URI_WSS, hostUrl_.c_str(), strlen(URI_WSS)) != 0
+		);
+		stage("Startup(s3)::connect - isSsl");
+
 		if(isSsl_)
 		{
 			conn_opts.ssl = & ssl_opts;
 			ssl_opts = MQTTClient_SSLOptions_initializer;
-			ssl_opts.trustStore = sslServerChainPem.c_str();
-			ssl_opts.privateKey = strClientKeyPem.c_str();
-			ssl_opts.enableServerCertAuth = 0;
-			ssl_opts.ssl_error_cb = SSL_err_handler;
+			ssl_opts.trustStore = (sslServerChainPem.length() ? sslServerChainPem.c_str() : NULL);
+			ssl_opts.privateKey = (strClientKeyPem.length() ? strClientKeyPem.c_str() : NULL);
+			ssl_opts.enableServerCertAuth = (sslServerChainPem.length() > 0);
 			ssl_opts.sslVersion = 3;
+			// ssl_opts.verify = (sslServerChainPem.length() > 0);;
+			ssl_opts.ssl_error_cb = SSL_err_handler;
+			ssl_opts.ssl_error_context = NULL;
 		}
+#endif
 
 		lastResult_ = MQTTClient_connect(client, &conn_opts);
 		stageLastError();

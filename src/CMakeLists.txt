@@ -10,6 +10,7 @@ set(MQTT_I ${CMAKE_BINARY_DIR}/mqtt/src/mqtt-build/include)
 set(MQTT_L ${CMAKE_BINARY_DIR}/mqtt/src/mqtt-build/lib)
 
 if(BUILD_MQTT_W_SSL)
+	target_compile_definitions(pubsub PRIVATE BUILD_MQTT_W_SSL)
 	set(MQTT_LIB libpaho-mqtt3cs.a)
 	if(BUILD_MQTT_W_LIBRESSL)
 		set(LIBRESSL_STATIC libssl.a libtls.a libcrypto.a )
