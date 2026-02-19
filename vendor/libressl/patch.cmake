@@ -1,7 +1,0 @@
-execute_process(
-	COMMAND ${CMAKE_COMMAND} -E patch -p1 ${SOURCE_FILE} < ${PATCH_FILE}
-	WORKING_DIRECTORY ${SOURCE_DIR}
-	RESULT_VARIABLE patch_result
-	OUTPUT_VARIABLE patch_output
-	ERROR_VARIABLE patch_error
-)
