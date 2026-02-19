@@ -11,7 +11,7 @@ if(BUILD_MQTT_W_SSL)
 		)
 	endif()
 
-	if(NOT EXISTS "${CMAKE_BINARY_DIR}/patch_applied")
+	if("${BUILD_TARGET}" STREQUAL "NEST" AND NOT EXISTS "${CMAKE_BINARY_DIR}/patch_applied")
 		set(SNI_PATCH patch -N -p1 -i ${CMAKE_CURRENT_LIST_DIR}/sni.patch)
 		set(SNI_PATCH_WRAPPER ${SNI_PATCH} && touch ${CMAKE_BINARY_DIR}/patch_applied)
 	endif()

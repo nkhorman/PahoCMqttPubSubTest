@@ -5,15 +5,17 @@ set(LIBRESSL_RELEASE "4.2.1")
 set(LIBRESSL_C_FLAGS "${CMAKE_C_FLAGS_INIT}")
 # set(LIBRESSL_CXX_FLAGS "${CMAKE_CXX_FLAGS_INIT}")
 
-if("${BUILD_TARGET}" STREQUAL "NEST")
-	set(LIBRESSL_PATCH patch -i ${CMAKE_CURRENT_LIST_DIR}/cmakelists.txt.patch)
-	# message(STATUS ${LIBRESSL_PATCH})
+if(${BUILD_TARGET} STREQUAL "NEST")
+	if(NOT EXISTS ${CMAKE_BINARY_DIR}/patched)
+		set(LIBRESSL_PATCH patch -N -i ${CMAKE_CURRENT_LIST_DIR}/cmakelists.txt.patch)
+	endif()
 endif()
 
 ExternalProject_Add(libressl
 	PREFIX ${CMAKE_BINARY_DIR}/libressl
 	URL "https://github.com/libressl/portable/releases/download/v${LIBRESSL_RELEASE}/libressl-${LIBRESSL_RELEASE}.tar.gz"
 	PATCH_COMMAND ${LIBRESSL_PATCH}
+	COMMAND touch "${CMAKE_BINARY_DIR}/patched"
 	CMAKE_ARGS
 		-DLIBRESSL_APPS=FALSE
 		-DLIBRESSL_TESTS=OFF
@@ -28,4 +30,3 @@ ExternalProject_Add(libressl
         -DCMAKE_C_FLAGS=${LIBRESSL_C_FLAGS}
         # -DCMAKE_CXX_FLAGS=${LIBRESSL_CXX_FLAGS}
 	)
-
