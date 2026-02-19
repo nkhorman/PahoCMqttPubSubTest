@@ -15,22 +15,23 @@ void callback(std::string const &topic, std::string const &val)
 
 void mqtt(
 	std::string const &host
-	, std::string const &value
 	, std::string const &topic
+	, std::string const &value
 	, int qos
 	, int retain
 	, int tock
 	, std::string const &userName
 	, std::string const &userPass
+	, std::string const &strCaPath
 	, std::string const &strServerCertPem
 	, std::string const &strClientKeyPem
-	, int sslLogLevel
+	, int LogLevel
 	)
 {
 	MqttSubPub mq;
 	std::cout << "mq clientid: " << mq.ClientId() << std::endl;
 
-	mq.SslLogLevel(sslLogLevel);
+	mq.LogLevel(LogLevel);
 
 	if(!userName.empty())
 	{
@@ -39,12 +40,15 @@ void mqtt(
 		.UserPass(userPass);
 	}
 
-	if(!strServerCertPem.empty())
+#ifdef BUILD_MQTT_W_SSL
+	if(!strServerCertPem.empty() || !strClientKeyPem.empty() || !strCaPath.empty())
 	{
-		std::cout << "chain: " << strServerCertPem << ", client: " << strClientKeyPem << std::endl;
-		mq.SslServerChain(strServerCertPem)
+		std::cout << "CaPath: " << strCaPath << ", chain: " << strServerCertPem << ", client: " << strClientKeyPem << std::endl;
+		mq.SslCaPath(strCaPath)
+			.SslServerChain(strServerCertPem)
 			.SslClientKey(strClientKeyPem);
 	}
+#endif
 
 	std::cout << "Connect - '" << host << "'" << std::endl;
 	mq.OnConnect([&]()
@@ -77,11 +81,12 @@ int main(int argc, char **argv)
 	int qos = 0;
 	int retain = 0;
 	int tick = 0;
+	char const *strCaPath = "";
 	char const *strServerChainPem = "";
 	char const *strClientKeyPem = "";
 	char const *userName = "";
 	char const *userPass = "";
-	int sslLogLevel = 0;
+	int LogLevel = 0;
 
 	struct option options[] =
 	{
@@ -93,6 +98,7 @@ int main(int argc, char **argv)
 			{ "tick", no_argument, &tick, 1 },
 			{ "username", required_argument, NULL, 'n' },
 			{ "userpass", required_argument, NULL, 'p' },
+			{ "capath", required_argument, NULL, 'c' },
 			{ "serverchain", required_argument, NULL, 's' },
 			{ "clientkey", required_argument, NULL, 'k' },
 			{ "loglevel", required_argument, NULL, 'l' },
@@ -103,7 +109,7 @@ int main(int argc, char **argv)
 	int n = 0;
 	while (n >= 0)  
 	{
-			n = getopt_long(argc, argv, "u:t:v:q:n:p:s:k:l:", options, NULL);
+			n = getopt_long(argc, argv, "u:t:v:q:n:p:s:k:l:c:", options, NULL);
 			if (n < 0)
 					continue;
 			switch (n)
@@ -116,7 +122,8 @@ int main(int argc, char **argv)
 				case 'p': userPass = optarg; break;
 				case 's': strServerChainPem = optarg; break;
 				case 'k': strClientKeyPem = optarg; break;
-				case 'l': sslLogLevel = atoi(optarg); break;
+				case 'l': LogLevel = atoi(optarg); break;
+				case 'c': strCaPath = optarg; break;
 			}
 	}
 	argc -= optind;
@@ -130,9 +137,10 @@ int main(int argc, char **argv)
 		, tick
 		, userName
 		, userPass
+		, strCaPath
 		, strServerChainPem
 		, strClientKeyPem
-		, sslLogLevel
+		, LogLevel
 		);
 
 	return 0;

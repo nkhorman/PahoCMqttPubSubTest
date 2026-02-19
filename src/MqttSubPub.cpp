@@ -31,7 +31,7 @@ MqttSubPub &MqttSubPub::Connect(std::string const &url)
 
 void trace_callback(enum MQTTCLIENT_TRACE_LEVELS level, char* message)
 {
-	std::cerr << "Trace: " << level << ", " << message << std::endl;
+	std::cerr << "MQTT: " << level << ", " << message << std::endl;
 }
 
 MqttSubPub & MqttSubPub::S1()
@@ -64,17 +64,19 @@ MqttSubPub & MqttSubPub::S2()
 		stage("Startup(s2)::setCallbacks");
 		lastResult_ = MQTTClient_setCallbacks(client, this
 			, MsgConnectionLost, MsgArrived, MsgDelivered
-		);
+			);
 		stageLastError();
 	}
 	return *this;
 }
 
+#ifdef BUILD_MQTT_W_SSL
 int SSL_err_handler(const char *str, size_t len, void *u)
 {
 	std::cerr << "SSL Error: " << str << std::endl;
 	return 0;
 }
+#endif
 
 MqttSubPub & MqttSubPub::S3()
 {
@@ -89,22 +91,23 @@ MqttSubPub & MqttSubPub::S3()
 
 #ifdef BUILD_MQTT_W_SSL
 		isSsl_ = (
-			strncmp(URI_SSL, hostUrl_.c_str(), strlen(URI_SSL)) != 0
-			|| strncmp(URI_TLS, hostUrl_.c_str(), strlen(URI_TLS)) != 0
-			|| strncmp(URI_MQTTS, hostUrl_.c_str(), strlen(URI_MQTTS)) != 0
-			|| strncmp(URI_WSS, hostUrl_.c_str(), strlen(URI_WSS)) != 0
+			strncmp(URI_SSL, hostUrl_.c_str(), strlen(URI_SSL)) == 0
+			|| strncmp(URI_TLS, hostUrl_.c_str(), strlen(URI_TLS)) == 0
+			|| strncmp(URI_MQTTS, hostUrl_.c_str(), strlen(URI_MQTTS)) == 0
+			|| strncmp(URI_WSS, hostUrl_.c_str(), strlen(URI_WSS)) == 0
 		);
-		stage("Startup(s3)::connect - isSsl");
 
 		if(isSsl_)
 		{
+			stage("Startup(s3)::connect - isSsl");
 			conn_opts.ssl = & ssl_opts;
 			ssl_opts = MQTTClient_SSLOptions_initializer;
 			ssl_opts.trustStore = (sslServerChainPem.length() ? sslServerChainPem.c_str() : NULL);
 			ssl_opts.privateKey = (strClientKeyPem.length() ? strClientKeyPem.c_str() : NULL);
 			ssl_opts.enableServerCertAuth = (sslServerChainPem.length() > 0);
 			ssl_opts.sslVersion = 3;
-			// ssl_opts.verify = (sslServerChainPem.length() > 0);;
+			ssl_opts.CApath = (sslCaPath.length() ? sslCaPath.c_str() : NULL);
+			ssl_opts.verify = (sslCaPath.length() > 0);
 			ssl_opts.ssl_error_cb = SSL_err_handler;
 			ssl_opts.ssl_error_context = NULL;
 		}

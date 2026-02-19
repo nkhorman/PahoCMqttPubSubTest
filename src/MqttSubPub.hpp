@@ -48,9 +48,12 @@ public:
 
 	MqttSubPub &UserName(std::string const &str) { userName_ = str; return *this; }
 	MqttSubPub &UserPass(std::string const &str) { userPass_ = str; return *this; }
-	MqttSubPub & SslServerChain(std::string const &str) { isSsl_ |= !str.empty(); sslServerChainPem = str; return * this;}
-	MqttSubPub & SslClientKey(std::string const &str) { isSsl_ |= !str.empty(); strClientKeyPem = str; return *this; }
-	void SslLogLevel(int l) { logLevel_ = l; }
+#ifdef BUILD_MQTT_W_SSL
+	MqttSubPub & SslCaPath(std::string const &str) { sslCaPath = str; return * this;}
+	MqttSubPub & SslServerChain(std::string const &str) { sslServerChainPem = str; return * this;}
+	MqttSubPub & SslClientKey(std::string const &str) { strClientKeyPem = str; return *this; }
+#endif
+	void LogLevel(int l) { logLevel_ = l; }
 
 
 	MqttSubPub &  OnConnect(std::function<void()> fn) { fnOnConnect_ = fn; return *this; }
@@ -78,9 +81,12 @@ protected:
 	bool subscribed_ = false;
 	bool connLost_ = false;
 
+#ifdef BUILD_MQTT_W_SSL
 	bool isSsl_ = false;
+	std::string sslCaPath;
 	std::string sslServerChainPem;
 	std::string strClientKeyPem;
+#endif
 	int logLevel_ = 5;
 
 	std::function<void(std::string const &, std::string const &)> fnSubCallback_;
@@ -90,7 +96,9 @@ protected:
 	std::string stage_;
 	MQTTClient client;
 	MQTTClient_connectOptions conn_opts = MQTTClient_connectOptions_initializer;
+#ifdef BUILD_MQTT_W_SSL
 	MQTTClient_SSLOptions ssl_opts = MQTTClient_SSLOptions_initializer;;
+#endif
 	MQTTClient_message pubmsg = MQTTClient_message_initializer;
 	MQTTClient_deliveryToken token;
 
