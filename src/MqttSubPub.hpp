@@ -20,6 +20,7 @@ public:
 	MqttSubPub &Connect(std::string const &url);
 
 	inline MqttSubPub &Topic(std::string const &topic) { topic_ = topic; return *this;}
+	inline std::string const &Topic() const { return topic_; }
 	std::string LastResult();
 
 	bool Publish(std::string const &value, int qos, int retain);
@@ -32,13 +33,15 @@ public:
 	{
 #ifdef MQTT_STAGE
 		stage_ = stage;
-		std::cout << "stage: " << stage_ << std::endl;
+		if(debug_)
+			std::cout << "stage: " << stage_ << std::endl;
 #endif
 	}
 	inline void stageLastError()
 	{
 #ifdef MQTT_STAGE
-		std::cout << "stage: " << LastResult() << std::endl;
+		if(debug_)
+			std::cout << "stage: " << LastResult() << std::endl;
 #endif
 	}
 	std::string stage() const { return stage_; }
@@ -54,7 +57,7 @@ public:
 	MqttSubPub & SslClientKey(std::string const &str) { strClientKeyPem = str; return *this; }
 #endif
 	void LogLevel(int l) { logLevel_ = l; }
-
+	void Debug(int d) { debug_ = d; }
 
 	MqttSubPub &  OnConnect(std::function<void()> fn) { fnOnConnect_ = fn; return *this; }
 	MqttSubPub &  OnDisconnect(std::function<void()> fn) { fnOnDisconnect_ = fn; return *this; }
@@ -88,6 +91,7 @@ protected:
 	std::string strClientKeyPem;
 #endif
 	int logLevel_ = 5;
+	int debug_ = 0;
 
 	std::function<void(std::string const &, std::string const &)> fnSubCallback_;
 

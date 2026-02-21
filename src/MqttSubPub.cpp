@@ -2,6 +2,7 @@
 #include <map>
 #include <sstream>
 #include <iostream>
+#include <regex.h>
 
 #include <string.h>
 
@@ -14,13 +15,64 @@
 #define URI_WSS  "wss://"
 #endif
 
+static std::map<std::string, std::string> parse_url(std::string const &urlStr)
+{
+	std::map<std::string, std::string> urlMap;
+	// Regex for: protocol, user:pass (optional), host, port (optional), path (optional)
+	const char *pattern =
+		"^([^:]+)://"		// protocol
+		"(([^:@]+):([^@]+)@)?"	// user:pass - doesn't handle "user" only
+		"([^:/]+)"				// host
+		"(:([0-9]+))?"			// port
+		"/(.*)?$"				// path
+		;
+	regex_t regex;
+
+	if(regcomp(&regex, pattern, REG_EXTENDED) == 0)
+	{
+		char const *url = urlStr.c_str();
+		#define MAXELEMENTS 9
+		regmatch_t matches[MAXELEMENTS];
+		if(regexec(&regex, url, MAXELEMENTS, matches, 0) == 0)
+		{
+			char const *indexes[] = {NULL,"proto",NULL,"user","pass","host",NULL,"port","path"};
+			for(int i = 1; i < MAXELEMENTS; i++)
+			{
+				if(matches[i].rm_so != -1 && indexes[i])
+				{
+					std::string s(url + matches[i].rm_so, matches[i].rm_eo - matches[i].rm_so);
+					urlMap[indexes[i]] = std::string(url + matches[i].rm_so, matches[i].rm_eo - matches[i].rm_so);
+				}
+			}
+		}
+		regfree(&regex);
+	}
+
+	return urlMap;
+}
+
 MqttSubPub &MqttSubPub::Connect(std::string const &url)
 {
 	if(hostUrl_ != url)
 	{
-		hostUrl_ = url;
 		if(initialized_)
 			Shutdown();
+
+		std::map<std::string, std::string> urlMap = parse_url(url);
+		std::string newUrl = url;;
+		if(!urlMap["proto"].empty())
+		{
+			newUrl = urlMap["proto"] + "://" + urlMap["host"];
+			if(!urlMap["path"].empty())
+				Topic(urlMap["path"]);
+			if(!urlMap["user"].empty())
+				UserName(urlMap["user"]);
+			if(!urlMap["pass"].empty())
+				UserPass(urlMap["pass"]);
+		}
+		hostUrl_ = newUrl;
+		stage("Connect(" + url + ") - " + newUrl);
+
 		Startup();
 	}
 
@@ -218,7 +270,9 @@ bool MqttSubPub::Subscribe(std::function<void(std::string const &topic, std::str
 
 	if(initialized_ && !subscribed_)
 	{
-		stage("Subscribe()::subscribe");
+		std::ostringstream oss;
+		oss << "Subscribe(" << topic_ << ")::subscribe";
+		stage(oss.str());
 		lastResult_ = MQTTClient_subscribe(client, topic_.c_str(), qos);
 		stageLastError();
 		subscribed_ = (lastResult_ == MQTTCLIENT_SUCCESS);
