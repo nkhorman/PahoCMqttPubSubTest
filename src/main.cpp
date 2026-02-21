@@ -58,15 +58,19 @@ void mqtt(
 	std::cout << "Connect - '" << host << "'" << std::endl;
 	mq.OnConnect([&]()
 	{
-		// std::cout << "Subscribe - '" << mq.Topic() << "'" << std::endl;
-		if(mq.Subscribe(callback, qos))
-			std::cout << "Subscribe - success" << std::endl;
-		else
-			std::cout << "Subscribe - fail - " << mq.LastResult() << std::endl;
+		if(value.empty())
+		{
+			if(mq.Subscribe(callback, qos))
+				std::cout << "Subscribe - success" << std::endl;
+			else
+				std::cout << "Subscribe - fail - " << mq.LastResult() << std::endl;
+		}
+		else if(!mq.Publish(value, qos, retain))
+			std::cout << "Publish - fail - " << mq.LastResult() << std::endl;
 	}).Connect(host);
 
 	int tick = 0;
-	while(!mq.needShutdown() && !mq.isError())
+	while(value.empty() && !mq.needShutdown() && !mq.isError())
 	{
 		usleep(1000 * 1000);
 		tick +=1;
