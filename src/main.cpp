@@ -26,12 +26,14 @@ void mqtt(
 	, std::string const &strServerCertPem
 	, std::string const &strClientKeyPem
 	, int LogLevel
+	, int debug
 	)
 {
 	MqttSubPub mq;
 	std::cout << "mq clientid: " << mq.ClientId() << std::endl;
 
 	mq.LogLevel(LogLevel);
+	mq.Debug(debug);
 
 	if(!userName.empty())
 	{
@@ -39,6 +41,9 @@ void mqtt(
 		mq.UserName(userName)
 		.UserPass(userPass);
 	}
+
+	if(!topic.empty())
+		mq.Topic(topic);
 
 #ifdef BUILD_MQTT_W_SSL
 	if(!strServerCertPem.empty() || !strClientKeyPem.empty() || !strCaPath.empty())
@@ -53,9 +58,9 @@ void mqtt(
 	std::cout << "Connect - '" << host << "'" << std::endl;
 	mq.OnConnect([&]()
 	{
-		std::cout << "Subscribe - '" << topic << "'" << std::endl;
-		if(mq.Topic(topic).Subscribe(callback, qos))
-			std::cout << "Subscribe - success - " << mq.LastResult() << std::endl;
+		// std::cout << "Subscribe - '" << mq.Topic() << "'" << std::endl;
+		if(mq.Subscribe(callback, qos))
+			std::cout << "Subscribe - success" << std::endl;
 		else
 			std::cout << "Subscribe - fail - " << mq.LastResult() << std::endl;
 	}).Connect(host);
@@ -73,11 +78,26 @@ void mqtt(
 	}
 }
 
+void help()
+{
+	std::cout <<
+		"Parameters;"
+		"\n\t-u | --url\t- mqtt,mqtts://host/topic"
+		"\n\t-v | --value\t- MQTT Write Value"
+		"\n\t-q | --qos\t- MQTT Write QualityOfService 1,2,3"
+		"\n\t--retain\t- MQTT Write Retain flag"
+		"\n\t-c | --capath\t- CA Path"
+		"\n\t-s | --serverchain\t- SSL PEM file with server Certificate chain"
+		"\n\t-k | --clientkey\t- SSL PEM file with private key"
+		"\n\t-l | --loglevel\t- MQTT / SSL protcol debug loging level 1-5"
+		<< std::endl;
+}
+
 int main(int argc, char **argv)
 {
 	char const *url = "localhost";
-	char const *topic = "test topic";
-	char const *value = "test value";
+	char const *topic = "";
+	char const *value = "";
 	int qos = 0;
 	int retain = 0;
 	int tick = 0;
@@ -87,6 +107,7 @@ int main(int argc, char **argv)
 	char const *userName = "";
 	char const *userPass = "";
 	int LogLevel = 0;
+	int debug = 0;
 
 	struct option options[] =
 	{
@@ -122,26 +143,32 @@ int main(int argc, char **argv)
 				case 'p': userPass = optarg; break;
 				case 's': strServerChainPem = optarg; break;
 				case 'k': strClientKeyPem = optarg; break;
-				case 'l': LogLevel = atoi(optarg); break;
+				case 'l': LogLevel = atoi(optarg); debug = (LogLevel > 0); break;
 				case 'c': strCaPath = optarg; break;
 			}
 	}
-	argc -= optind;
-	argv += optind;
+	if(argc == 1)
+		help();
+	else
+	{
+		argc -= optind;
+		argv += optind;
 
-	mqtt(url
-		, topic
-		, value
-		, qos
-		, retain
-		, tick
-		, userName
-		, userPass
-		, strCaPath
-		, strServerChainPem
-		, strClientKeyPem
-		, LogLevel
-		);
+		mqtt(url
+			, topic
+			, value
+			, qos
+			, retain
+			, tick
+			, userName
+			, userPass
+			, strCaPath
+			, strServerChainPem
+			, strClientKeyPem
+			, LogLevel
+			, debug
+			);
+	}
 
 	return 0;
 }
