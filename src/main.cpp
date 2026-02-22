@@ -79,8 +79,8 @@ void help()
 		"\n\t--retain\t- MQTT Write Retain flag"
 		"\n\t-c | --capath\t- CA Path"
 		"\n\t-s | --serverchain\t- SSL PEM file with server Certificate chain"
-		"\n\t-k | --clientkey\t- SSL PEM file with private key"
-		"\n\t-l | --loglevel\t- MQTT / SSL protcol debug loging level 1-5"
+		"\n\t-k | --clientcert\t- SSL PEM file with certificate and private key"
+		"\n\t-l | --loglevel\t- MQTT / SSL protcol debug loging level 1-5 - try 4"
 		<< std::endl;
 }
 
@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 			{ "tick", no_argument, &tick, 1 },
 			{ "capath", required_argument, NULL, 'c' },
 			{ "serverchain", required_argument, NULL, 's' },
-			{ "clientkey", required_argument, NULL, 'k' },
+			{ "clientcert", required_argument, NULL, 'k' },
 			{ "loglevel", required_argument, NULL, 'l' },
 			{ NULL, 0, 0, 0 }
 	};
@@ -120,6 +120,7 @@ int main(int argc, char **argv)
 					continue;
 			switch (n)
 			{
+				default: help(); exit(0); break;
 				case 'u': url = optarg; break;
 				case 'v': value = optarg; break;
 				case 'q': qos = atoi(optarg); break;
