@@ -173,9 +173,10 @@ MqttSubPub & MqttSubPub::S3()
 			conn_opts.ssl = & ssl_opts;
 			ssl_opts = MQTTClient_SSLOptions_initializer;
 			ssl_opts.trustStore = (sslServerChainPem.length() ? sslServerChainPem.c_str() : NULL);
+			ssl_opts.keyStore = (strClientKeyPem.length() ? strClientKeyPem.c_str() : NULL);
 			ssl_opts.privateKey = (strClientKeyPem.length() ? strClientKeyPem.c_str() : NULL);
 			ssl_opts.enableServerCertAuth = (sslServerChainPem.length() > 0);
-			ssl_opts.sslVersion = 3;
+			ssl_opts.sslVersion = 3; // TLS 1.2
 			ssl_opts.CApath = (sslCaPath.length() ? sslCaPath.c_str() : NULL);
 			ssl_opts.verify = (sslCaPath.length() > 0);
 			ssl_opts.ssl_error_cb = SSL_err_handler;
