@@ -8,20 +8,17 @@
 
 #include "MqttSubPub.hpp"
 
-void callback(std::string const &topic, std::string const &val)
+void OnChangeSub(std::string const &topic, std::string const &val)
 {
 	std::cout << "Subscription update - '" << topic << "' = '" << val << "'" << std::endl;
 }
 
 void mqtt(
 	std::string const &host
-	, std::string const &topic
 	, std::string const &value
 	, int qos
 	, int retain
 	, int tock
-	, std::string const &userName
-	, std::string const &userPass
 	, std::string const &strCaPath
 	, std::string const &strServerCertPem
 	, std::string const &strClientKeyPem
@@ -34,16 +31,6 @@ void mqtt(
 
 	mq.LogLevel(LogLevel);
 	mq.Debug(debug);
-
-	if(!userName.empty())
-	{
-		std::cout << "user: " << userName << ", pass: " << userPass << std::endl;
-		mq.UserName(userName)
-		.UserPass(userPass);
-	}
-
-	if(!topic.empty())
-		mq.Topic(topic);
 
 #ifdef BUILD_MQTT_W_SSL
 	if(!strServerCertPem.empty() || !strClientKeyPem.empty() || !strCaPath.empty())
@@ -60,7 +47,7 @@ void mqtt(
 	{
 		if(value.empty())
 		{
-			if(mq.Subscribe(callback, qos))
+			if(mq.Subscribe(OnChangeSub, qos))
 				std::cout << "Subscribe - success" << std::endl;
 			else
 				std::cout << "Subscribe - fail - " << mq.LastResult() << std::endl;
@@ -100,7 +87,6 @@ void help()
 int main(int argc, char **argv)
 {
 	char const *url = "localhost";
-	char const *topic = "";
 	char const *value = "";
 	int qos = 0;
 	int retain = 0;
@@ -108,21 +94,16 @@ int main(int argc, char **argv)
 	char const *strCaPath = "";
 	char const *strServerChainPem = "";
 	char const *strClientKeyPem = "";
-	char const *userName = "";
-	char const *userPass = "";
 	int LogLevel = 0;
 	int debug = 0;
 
 	struct option options[] =
 	{
 			{ "url", required_argument, NULL, 'u' },
-			{ "topic", required_argument, NULL, 't' },
 			{ "value", required_argument, NULL, 'v' },
 			{ "qos", required_argument, NULL, 'q' },
 			{ "retain", no_argument, &retain, 1 },
 			{ "tick", no_argument, &tick, 1 },
-			{ "username", required_argument, NULL, 'n' },
-			{ "userpass", required_argument, NULL, 'p' },
 			{ "capath", required_argument, NULL, 'c' },
 			{ "serverchain", required_argument, NULL, 's' },
 			{ "clientkey", required_argument, NULL, 'k' },
@@ -134,17 +115,14 @@ int main(int argc, char **argv)
 	int n = 0;
 	while (n >= 0)  
 	{
-			n = getopt_long(argc, argv, "u:t:v:q:n:p:s:k:l:c:", options, NULL);
+			n = getopt_long(argc, argv, "u:v:q:s:k:l:c:", options, NULL);
 			if (n < 0)
 					continue;
 			switch (n)
 			{
 				case 'u': url = optarg; break;
-				case 't': topic = optarg; break;
 				case 'v': value = optarg; break;
 				case 'q': qos = atoi(optarg); break;
-				case 'n': userName = optarg; break;
-				case 'p': userPass = optarg; break;
 				case 's': strServerChainPem = optarg; break;
 				case 'k': strClientKeyPem = optarg; break;
 				case 'l': LogLevel = atoi(optarg); debug = (LogLevel > 0); break;
@@ -159,13 +137,10 @@ int main(int argc, char **argv)
 		argv += optind;
 
 		mqtt(url
-			, topic
 			, value
 			, qos
 			, retain
 			, tick
-			, userName
-			, userPass
 			, strCaPath
 			, strServerChainPem
 			, strClientKeyPem
