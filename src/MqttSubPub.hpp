@@ -9,11 +9,13 @@
 class MqttSubPub
 {
 public:
-	MqttSubPub()
-		: clientId_("MqttSubPub")
+	MqttSubPub(std::string const &id = "")
+		: clientId_(id)
 		, lastResult_(MQTTCLIENT_SUCCESS)
 		{
-			clientId_ += StringRand::Simple(8);
+			if(clientId_.empty())
+				clientId_ = "MqttSubPub" + StringRand::Simple(8);
+			willTopic_ = clientId_ + "/status";
 		};
 	virtual ~MqttSubPub() { Shutdown(); }
 
@@ -23,7 +25,7 @@ public:
 	inline std::string const &Topic() const { return topic_; }
 	std::string LastResult();
 
-	bool Publish(std::string const &value, int qos, int retain);
+	bool Publish(std::string const &value, int qos, int retain, std::string topic = "");
 	inline std::string ClientId() const { return clientId_; }
 
 	bool Subscribe(std::function<void(std::string const &topic, std::string const &msg)> fn, int qos = 0);
@@ -71,6 +73,7 @@ protected:
 	int lastResult_ = -1;
 	bool subscribed_ = false;
 	bool connLost_ = false;
+	std::string willTopic_;
 
 #ifdef BUILD_MQTT_W_SSL
 	bool isSsl_ = false;
@@ -93,6 +96,7 @@ protected:
 #endif
 	MQTTClient_message pubmsg = MQTTClient_message_initializer;
 	MQTTClient_deliveryToken token;
+	MQTTClient_willOptions clientWill = MQTTClient_willOptions_initializer;
 
 	std::function<void()> fnOnConnect_;
 	std::function<void()> fnOnDisconnect_;

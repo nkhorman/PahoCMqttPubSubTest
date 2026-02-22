@@ -14,7 +14,8 @@ void OnChangeSub(std::string const &topic, std::string const &val)
 }
 
 void mqtt(
-	std::string const &host
+	std::string const &strClientId
+	, std::string host
 	, std::string const &value
 	, int qos
 	, int retain
@@ -26,7 +27,7 @@ void mqtt(
 	, int debug
 	)
 {
-	MqttSubPub mq;
+	MqttSubPub mq(strClientId);
 	std::cout << "mq clientid: " << mq.ClientId() << std::endl;
 
 	mq.LogLevel(LogLevel);
@@ -73,6 +74,7 @@ void help()
 {
 	std::cout <<
 		"Parameters;"
+		"\n\t-i | --id\t- Client ID"
 		"\n\t-u | --url\t- mqtt,mqtts://host/topic"
 		"\n\t-v | --value\t- MQTT Write Value"
 		"\n\t-q | --qos\t- MQTT Write QualityOfService 1,2,3"
@@ -96,6 +98,7 @@ int main(int argc, char **argv)
 	char const *strClientKeyPem = "";
 	int LogLevel = 0;
 	int debug = 0;
+	std::string strClientId;
 
 	struct option options[] =
 	{
@@ -108,6 +111,7 @@ int main(int argc, char **argv)
 			{ "serverchain", required_argument, NULL, 's' },
 			{ "clientcert", required_argument, NULL, 'k' },
 			{ "loglevel", required_argument, NULL, 'l' },
+			{ "id", required_argument, NULL, 'i' },
 			{ NULL, 0, 0, 0 }
 	};
 
@@ -115,7 +119,7 @@ int main(int argc, char **argv)
 	int n = 0;
 	while (n >= 0)  
 	{
-			n = getopt_long(argc, argv, "u:v:q:s:k:l:c:", options, NULL);
+			n = getopt_long(argc, argv, "u:v:q:s:k:l:c:i:", options, NULL);
 			if (n < 0)
 					continue;
 			switch (n)
@@ -128,6 +132,7 @@ int main(int argc, char **argv)
 				case 'k': strClientKeyPem = optarg; break;
 				case 'l': LogLevel = atoi(optarg); debug = (LogLevel > 0); break;
 				case 'c': strCaPath = optarg; break;
+				case 'i': strClientId = optarg; break;
 			}
 	}
 	if(argc == 1)
@@ -137,7 +142,9 @@ int main(int argc, char **argv)
 		argc -= optind;
 		argv += optind;
 
-		mqtt(url
+		mqtt(
+			strClientId
+			, url
 			, value
 			, qos
 			, retain

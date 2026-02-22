@@ -159,6 +159,14 @@ MqttSubPub & MqttSubPub::S3()
 		conn_opts.username = userName_.c_str();
 		conn_opts.password = userPass_.c_str();
 
+		clientWill = MQTTClient_willOptions_initializer;
+		clientWill.qos = 1 ;
+		clientWill.retained = 0;
+		clientWill.topicName = willTopic_.c_str();
+		clientWill.message = "offline";
+
+		conn_opts.will = &clientWill;
+
 #ifdef BUILD_MQTT_W_SSL
 		isSsl_ = (
 			strncmp(URI_SSL, hostUrl_.c_str(), strlen(URI_SSL)) == 0
@@ -188,8 +196,12 @@ MqttSubPub & MqttSubPub::S3()
 		stageLastError();
 
 		initialized_= (lastResult_ == MQTTCLIENT_SUCCESS);
-		if(lastResult_ == MQTTCLIENT_SUCCESS && fnOnConnect_)
-			fnOnConnect_();
+		if(lastResult_ == MQTTCLIENT_SUCCESS)
+		{
+			if(fnOnConnect_)
+				fnOnConnect_();
+			Publish("online", clientWill.qos, clientWill.retained, willTopic_);
+		}
 	}
 
 	return *this;
@@ -315,7 +327,7 @@ bool MqttSubPub::Unsubscribe()
 	return !subscribed_;
 }
 
-bool MqttSubPub::Publish(std::string const &value, int qos, int retain)
+bool MqttSubPub::Publish(std::string const &value, int qos, int retain, std::string topic /* ="" */)
 {
 	lastResult_ = MQTTCLIENT_FAILURE;
 	if(initialized_)
@@ -324,9 +336,12 @@ bool MqttSubPub::Publish(std::string const &value, int qos, int retain)
 		pubmsg.payloadlen = value.length();
 		pubmsg.qos = (qos >=0 && qos < 3 ? qos : 0);
 		pubmsg.retained = retain;
-		stage_ = "Publish()::publish";
+		if(topic.empty())
+			topic = topic_;
 
-		lastResult_ = MQTTClient_publishMessage(client, topic_.c_str(), &pubmsg, &token);
+		stage_ = "Publish(" + topic + ")::publish";
+
+		lastResult_ = MQTTClient_publishMessage(client, topic.c_str(), &pubmsg, &token);
 		stageLastError();
 		if (lastResult_ == MQTTCLIENT_SUCCESS)
 		{
