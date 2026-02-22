@@ -24,10 +24,31 @@ This will first automatically envoke
 ### Usage
 For subscription, envoke as
 ```
-./build_host/src/pubsub --url mqtt://host/topic
+./build_host/src/pubsub --url mqtt://broker.hostname/topic
 ```
 
 For publication, envoke as
 ```
-./build_host/src/pubsub --url mqtt://host/topic --qos 1 --retain --value abc
+./build_host/src/pubsub --url mqtt://broker.hostname/topic --qos 1 --retain --value abc
+```
+You should be able to use both mqtt://... and mqtts://...
+
+For username password authentication;
+```
+mqtt://username:password@broker.hostname/topic
+```
+
+For SSL validation of the broker;
+```
+mqtts://broker.hostname/topic --serverchain /some/path/chain.pem
+```
+
+For SSL brokers with public certs;
+```
+mqtts://public.broker.hostname/topic --capath /some/path/to/ca/repository
+```
+
+For SSL brokers requiring client certs;
+```
+mqtts://broker.hostname/topic --clientcert /some/path/to/client.cert.key.pem
 ```
