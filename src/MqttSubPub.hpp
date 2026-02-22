@@ -24,43 +24,31 @@ public:
 	std::string LastResult();
 
 	bool Publish(std::string const &value, int qos, int retain);
-	std::string ClientId() const { return clientId_; }
+	inline std::string ClientId() const { return clientId_; }
 
 	bool Subscribe(std::function<void(std::string const &topic, std::string const &msg)> fn, int qos = 0);
 	bool Unsubscribe();
 
-	inline void stage(std::string stage)
-	{
-#ifdef MQTT_STAGE
-		stage_ = stage;
-		if(debug_)
-			std::cout << "stage: " << stage_ << std::endl;
-#endif
-	}
-	inline void stageLastError()
-	{
-#ifdef MQTT_STAGE
-		if(debug_)
-			std::cout << "stage: " << LastResult() << std::endl;
-#endif
-	}
-	std::string stage() const { return stage_; }
+	void stage(std::string stage);
+	void stageLastError();
 
-	bool needShutdown() const { return connLost_; }
-	bool isError() const { return lastResult_ != MQTTCLIENT_SUCCESS; }
+	inline std::string stage() const { return stage_; }
 
-	MqttSubPub &UserName(std::string const &str) { userName_ = str; return *this; }
-	MqttSubPub &UserPass(std::string const &str) { userPass_ = str; return *this; }
+	inline bool needShutdown() const { return connLost_; }
+	inline bool isError() const { return lastResult_ != MQTTCLIENT_SUCCESS; }
+
+	inline MqttSubPub &UserName(std::string const &str) { userName_ = str; return *this; }
+	inline MqttSubPub &UserPass(std::string const &str) { userPass_ = str; return *this; }
 #ifdef BUILD_MQTT_W_SSL
-	MqttSubPub & SslCaPath(std::string const &str) { sslCaPath = str; return * this;}
-	MqttSubPub & SslServerChain(std::string const &str) { sslServerChainPem = str; return * this;}
-	MqttSubPub & SslClientKey(std::string const &str) { strClientKeyPem = str; return *this; }
+	inline MqttSubPub & SslCaPath(std::string const &str) { sslCaPath = str; return * this;}
+	inline MqttSubPub & SslServerChain(std::string const &str) { sslServerChainPem = str; return * this;}
+	inline MqttSubPub & SslClientKey(std::string const &str) { strClientKeyPem = str; return *this; }
 #endif
-	void LogLevel(int l) { logLevel_ = l; }
-	void Debug(int d) { debug_ = d; }
+	inline void LogLevel(int l) { logLevel_ = l; }
+	inline void Debug(int d) { debug_ = d; }
 
-	MqttSubPub &  OnConnect(std::function<void()> fn) { fnOnConnect_ = fn; return *this; }
-	MqttSubPub &  OnDisconnect(std::function<void()> fn) { fnOnDisconnect_ = fn; return *this; }
+	inline MqttSubPub &  OnConnect(std::function<void()> fn) { fnOnConnect_ = fn; return *this; }
+	inline MqttSubPub &  OnDisconnect(std::function<void()> fn) { fnOnDisconnect_ = fn; return *this; }
 
 protected:
 	void Shutdown();

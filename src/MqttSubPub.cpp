@@ -51,6 +51,24 @@ static std::map<std::string, std::string> parse_url(std::string const &urlStr)
 	return urlMap;
 }
 
+void MqttSubPub::stage(std::string stage)
+{
+#ifdef MQTT_STAGE
+	stage_ = stage;
+	if(debug_)
+		std::cout << "stage: " << stage_ << std::endl;
+#endif
+}
+
+void MqttSubPub::stageLastError()
+{
+#ifdef MQTT_STAGE
+	if(debug_)
+		std::cout << "stage: " << LastResult() << std::endl;
+#endif
+}
+
+
 MqttSubPub &MqttSubPub::Connect(std::string const &url)
 {
 	if(hostUrl_ != url)
