@@ -161,7 +161,7 @@ MqttSubPub & MqttSubPub::S3()
 
 		clientWill = MQTTClient_willOptions_initializer;
 		clientWill.qos = 1 ;
-		clientWill.retained = 0;
+		clientWill.retained = willTopicRetain_;
 		clientWill.topicName = willTopic_.c_str();
 		clientWill.message = "offline";
 
@@ -220,6 +220,8 @@ void MqttSubPub::Shutdown()
 	{
 		if(subscribed_)
 			Unsubscribe();
+		Publish(clientWill.message, clientWill.qos, clientWill.retained, willTopic_);
+
 		initialized_ = false;
 		stage("Shutdown()::disconnect");
 		lastResult_ = MQTTClient_disconnect(client, timeout_);

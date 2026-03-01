@@ -13,6 +13,7 @@ public:
 		: clientId_(id)
 		, lastResult_(MQTTCLIENT_SUCCESS)
 		{
+			willTopicRetain_ = !clientId_.empty();
 			if(clientId_.empty())
 				clientId_ = "MqttSubPub" + StringRand::Simple(8);
 			willTopic_ = clientId_ + "/status";
@@ -74,6 +75,7 @@ protected:
 	bool subscribed_ = false;
 	bool connLost_ = false;
 	std::string willTopic_;
+	bool willTopicRetain_ = false;
 
 #ifdef BUILD_MQTT_W_SSL
 	bool isSsl_ = false;
