@@ -70,8 +70,14 @@ void mqtt(
 	}
 }
 
-void help()
+void help(int argc, char **argv, int optind)
 {
+	if(argc > 0)
+	{
+		std::cout << "Unknown option starting at;" << std::endl;
+		for(int i=optind-1; i<argc; i++)
+			std::cout << "\t" << " " << argv[i] << std::endl;
+	}
 	std::cout <<
 		"Parameters;"
 		"\n\t-i | --id\t- Client ID"
@@ -124,7 +130,7 @@ int main(int argc, char **argv)
 					continue;
 			switch (n)
 			{
-				default: help(); exit(0); break;
+				case '?': help(argc, argv, optind); exit(0); break;
 				case 'u': url = optarg; break;
 				case 'v': value = optarg; break;
 				case 'q': qos = atoi(optarg); break;
@@ -135,8 +141,9 @@ int main(int argc, char **argv)
 				case 'i': strClientId = optarg; break;
 			}
 	}
+
 	if(argc == 1)
-		help();
+		help(0, NULL, 0);
 	else
 	{
 		argc -= optind;
